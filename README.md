@@ -44,7 +44,7 @@ static ws2811Config ws2811_cfg =
         0,
         TIM_DIER_UDE | TIM_DIER_CC2DE | TIM_DIER_CC1DE,
     },
-    &PWMD2,
+    &PWMD2, // Timer has to be 16bit only
     1,
     WS2811_ZERO_PWM_WIDTH,
     WS2811_ONE_PWM_WIDTH,
