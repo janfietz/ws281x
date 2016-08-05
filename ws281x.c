@@ -53,7 +53,7 @@ static void ws281xSetColorBits(uint8_t red, uint8_t green, uint8_t blue,
 
 static void ws281xUpdateFrameBuffer(ws281xDriver *ws281xp)
 {
-    memcpy(ws281xp->framebuffer02, ws281xp->framebuffer, ws281xp->frameCount * 2);
+    memcpy(ws281xp->framebuffer, ws281xp->framebuffer02, ws281xp->frameCount * 2);
 }
 
 /**
@@ -168,7 +168,7 @@ void ws281xStart(ws281xDriver *ws281xp, const ws281xConfig *config) {
        STM32_DMA_CR_PSIZE_HWORD |
        STM32_DMA_CR_CIRC |
        STM32_DMA_CR_PL(3) |
-       STM32_DMA_CR_CHSEL(ws281xp->config.dmaChannel));
+       STM32_DMA_CR_CHSEL(ws281xp->config->dmaChannel));
 
     pwmStart(ws281xp->config->pwmd, &ws281xp->config->pwmConfig);
 
