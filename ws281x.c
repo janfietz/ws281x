@@ -111,16 +111,7 @@ static void ws281xSetColorBits(uint8_t red, uint8_t green, uint8_t blue,
 
 static void ws281xUpdateFrameBuffer(ws281xDriver *ws281xp)
 {
-    if (ws281xp->transmitBuffer02 == true)
-    {
-        ws281xp->transmitBuffer02 = false;
-    }
-    else
-    {
-        ws281xp->transmitBuffer02 = true;
-    }
-
-    ws281xp->updateframebuffer = false;
+    memcpy(ws281xp->framebuffer, ws281xp->framebuffer02, ws281xp->frameCount * 2);
 }
 
 /**
