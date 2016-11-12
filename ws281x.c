@@ -218,17 +218,17 @@ void ws281xStart(ws281xDriver *ws281xp, const ws281xConfig *config) {
         (stm32_dmaisr_t)ws281x_update_interrupt,
         (void*)ws281xp);
     dmaStreamSetPeripheral(ws281xp->config->dmastp, ws281xp->config->pwmd->tim->CCR + ws281xp->config->pwmChannel);
-//    dmaStreamSetMemory0(ws281xp->config->dmastp, ws281xp->framebuffer);
-//    dmaStreamSetTransactionSize(ws281xp->config->dmastp, ws281xp->frameCount);
-//    dmaStreamSetMode(ws281xp->config->dmastp,
-//       STM32_DMA_CR_TCIE |
-//       STM32_DMA_CR_DIR_M2P |
-//       STM32_DMA_CR_MINC |
-//       STM32_DMA_CR_MSIZE_HWORD |
-//       STM32_DMA_CR_PSIZE_HWORD |
-//       STM32_DMA_CR_CIRC |
-//       STM32_DMA_CR_PL(3) |
-//       STM32_DMA_CR_CHSEL(ws281xp->config->dmaChannel));
+    dmaStreamSetMemory0(ws281xp->config->dmastp, ws281xp->framebuffer);
+    dmaStreamSetTransactionSize(ws281xp->config->dmastp, ws281xp->frameCount);
+    dmaStreamSetMode(ws281xp->config->dmastp,
+       STM32_DMA_CR_TCIE |
+       STM32_DMA_CR_DIR_M2P |
+       STM32_DMA_CR_MINC |
+       STM32_DMA_CR_MSIZE_HWORD |
+       STM32_DMA_CR_PSIZE_HWORD |
+       STM32_DMA_CR_CIRC |
+       STM32_DMA_CR_PL(3) |
+       STM32_DMA_CR_CHSEL(ws281xp->config->dmaChannel));
 
     pwmStart(ws281xp->config->pwmd, &ws281xp->config->pwmConfig);
 
