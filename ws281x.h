@@ -78,7 +78,7 @@ typedef struct {
     /*
     * LED settings
     */
-    struct ws281xLEDSetting* ledSettings;
+    const struct ws281xLEDSetting* ledSettings;
     /*
      * Timer settings
      */
@@ -103,7 +103,7 @@ typedef struct {
     * DMA Stream to write compare counter values to channel register.
     * Channel has to be connected to used timer channel.
     */
-    stm32_dma_stream_t *dmastp;
+    const stm32_dma_stream_t *dmastp;
     /*
      * DMA Channel
      */
