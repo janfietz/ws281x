@@ -21,13 +21,13 @@
 /*===========================================================================*/
 /* Driver constants.                                                         */
 /*===========================================================================*/
-#define WS2811_BIT_PWM_WIDTH 30 //2.5 us
-#define WS2811_ZERO_PWM_WIDTH 6 //0.5 us
-#define WS2811_ONE_PWM_WIDTH 15 //1.2 us
+#define WS281X_400KHZ_BIT_PWM_WIDTH 30 //2.5 us
+#define WS281X_400KHZ_ZERO_PWM_WIDTH 6 //0.5 us
+#define WS281X_400KHZ_ONE_PWM_WIDTH 15 //1.2 us
 
-#define WS2812_BIT_PWM_WIDTH 15 //1.25 us
-#define WS2812_ZERO_PWM_WIDTH 4 //0.35 us
-#define WS2812_ONE_PWM_WIDTH 9 //0.7 us
+#define WS281X_800KHZ_BIT_PWM_WIDTH 15 //1.25 us
+#define WS281X_800KHZ_ZERO_PWM_WIDTH 4 //0.35 us
+#define WS281X_800KHZ_ONE_PWM_WIDTH 9 //0.7 us
 
 #define WS281X_RGB 1
 #define WS281X_GRB 2
