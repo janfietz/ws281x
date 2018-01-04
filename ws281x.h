@@ -128,7 +128,6 @@ struct ws281xDriver {
   uint32_t frameCount;
   uint16_t *framebuffer;
   uint16_t *framebuffer02;
-  bool transmitBuffer02;
   bool updateframebuffer;
   bool transactionActive;
   binary_semaphore_t bsemUpdateFrame;

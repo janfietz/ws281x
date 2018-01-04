@@ -29,17 +29,7 @@
 /*===========================================================================*/
 static void ws281xSetupDMA(ws281xDriver *ws281xp)
 {
-    ws281xp->transactionActive = true;
-
-    if (ws281xp->transmitBuffer02 == true)
-    {
-        dmaStreamSetMemory0(ws281xp->config->dmastp, ws281xp->framebuffer02);
-    }
-    else
-    {
-        dmaStreamSetMemory0(ws281xp->config->dmastp, ws281xp->framebuffer);
-    }
-
+    dmaStreamSetMemory0(ws281xp->config->dmastp, ws281xp->framebuffer);
     dmaStreamSetTransactionSize(ws281xp->config->dmastp, ws281xp->frameCount);
     dmaStreamSetMode(ws281xp->config->dmastp,
        STM32_DMA_CR_TCIE |
@@ -49,30 +39,31 @@ static void ws281xSetupDMA(ws281xDriver *ws281xp)
        STM32_DMA_CR_PSIZE_HWORD |
        STM32_DMA_CR_PL(3) |
        STM32_DMA_CR_CHSEL(ws281xp->config->dmaChannel));
-
 }
 
 static void ws281xStartTransaction(ws281xDriver *ws281xp)
 {
     ws281xp->transactionActive = true;
-
-    ws281xSetupDMA(ws281xp);
-
-    // set pwm values.
-    dmaStreamEnable(ws281xp->config->dmastp);
-    pwmStart(ws281xp->config->pwmd, &ws281xp->config->pwmConfig);
-}
-
-static void ws281xStartTransactionI(ws281xDriver *ws281xp)
-{
-    ws281xp->transactionActive = true;
     ws281xSetupDMA(ws281xp);
     dmaStreamEnable(ws281xp->config->dmastp);
+
+    /*
+    * Load buffer into preload register
+    */
+    ws281xp->config->pwmd->tim->EGR |= STM32_TIM_EGR_UG;
+    /* Wait until RESET of UG bit */
+    while ((ws281xp->config->pwmd->tim->EGR & STM32_TIM_EGR_UG) > 0) {}
+    /* Load data from preload to active register */
+    ws281xp->config->pwmd->tim->EGR |= STM32_TIM_EGR_UG;
+
+    // enable counting
+    ws281xp->config->pwmd->tim->CR1 |= STM32_TIM_CR1_CEN;
 }
 
 static void ws281xStopTransaction(ws281xDriver *ws281xp)
 {
-    pwmDisableChannelI(ws281xp->config->pwmd, ws281xp->config->pwmChannel);
+    // disable counting
+    ws281xp->config->pwmd->tim->CR1 &= ~STM32_TIM_CR1_CEN;
     dmaStreamDisable(ws281xp->config->dmastp);
     ws281xp->transactionActive = false;
 }
@@ -126,7 +117,7 @@ static void ws281x_update_interrupt(ws281xDriver *ws281xp, uint32_t flags)
             ws281xUpdateFrameBuffer(ws281xp);
             chBSemSignalI(&ws281xp->bsemUpdateFrame);
 
-            ws281xStartTransactionI(ws281xp);
+            ws281xStartTransaction(ws281xp);
         }
         osalSysUnlockFromISR();
     }
@@ -175,8 +166,8 @@ void ws281xStart(ws281xDriver *ws281xp, const ws281xConfig *config) {
     osalDbgCheck((ws281xp != NULL) && (config != NULL));
 
     osalSysLock();
-    osalDbgAssert((ws281xp->state == WS281X_STOP) || (ws281xp->state == WS281X_READY),
-            "invalid state");
+    osalDbgAssert((ws281xp->state == WS281X_STOP) ||
+        (ws281xp->state == WS281X_READY), "invalid state");
     ws281xp->config = config;
 
     osalSysUnlock();
@@ -209,8 +200,16 @@ void ws281xStart(ws281xDriver *ws281xp, const ws281xConfig *config) {
     dmaStreamAllocate(ws281xp->config->dmastp, WS281X_IRQ_PRIORITY,
         (stm32_dmaisr_t)ws281x_update_interrupt,
         (void*)ws281xp);
-    dmaStreamSetPeripheral(ws281xp->config->dmastp, ws281xp->config->pwmd->tim->CCR + ws281xp->config->pwmChannel);
+    dmaStreamSetPeripheral(ws281xp->config->dmastp,
+        ws281xp->config->pwmd->tim->CCR + ws281xp->config->pwmChannel);
     dmaStreamSetMemory0(ws281xp->config->dmastp, ws281xp->framebuffer);
+
+    ws281xSetupDMA(ws281xp);
+    pwmStart(ws281xp->config->pwmd, &ws281xp->config->pwmConfig);
+
+    /* stop counting */
+    ws281xp->config->pwmd->tim->CR1 &= ~STM32_TIM_CR1_CEN;
+    ws281xp->config->pwmd->tim->CR1  &= ~STM32_TIM_CR1_URS;
 
     osalSysLock();
     ws281xp->state = WS281X_ACTIVE;
@@ -229,26 +228,25 @@ void ws281xStop(ws281xDriver *ws281xp) {
     osalDbgCheck(ws281xp != NULL);
 
     osalSysLock();
-    osalDbgAssert((ws281xp->state == WS281X_STOP) || (ws281xp->state == WS281X_READY),
+    osalDbgAssert((ws281xp->state == WS281X_STOP) ||
+        (ws281xp->state == WS281X_READY),
             "invalid state");
 
     ws281xp->state = WS281X_STOP;
     osalSysUnlock();
 }
 
-void ws281xSetColor(ws281xDriver *ws281xp, int ledNum, uint8_t red, uint8_t green, uint8_t blue)
+void ws281xSetColor(ws281xDriver *ws281xp, int ledNum,
+    uint8_t red, uint8_t green, uint8_t blue)
 {
     osalDbgCheck(ws281xp != NULL);
     osalDbgCheck(ledNum < ws281xp->config->ledCount);
 
     osalSysLock();
-    osalDbgAssert((ws281xp->state == WS281X_READY) || (ws281xp->state == WS281X_ACTIVE), "invalid state");
+    osalDbgAssert((ws281xp->state == WS281X_READY) ||
+        (ws281xp->state == WS281X_ACTIVE), "invalid state");
 
     uint16_t* buffer = ws281xp->framebuffer02;
-    if (ws281xp->transmitBuffer02 == true)
-    {
-        buffer = ws281xp->framebuffer;
-    }
     osalSysUnlock();
 
     uint16_t* frame = buffer + (24 * ledNum);
@@ -275,10 +273,6 @@ void ws281xUpdate(ws281xDriver *ws281xp)
 
     if (ws281xp->transactionActive == false)
     {
-        osalSysUnlock();
-        pwmStop(ws281xp->config->pwmd);
-        osalSysLock();
-
         ws281xUpdateFrameBuffer(ws281xp);
         osalSysUnlock();
         ws281xStartTransaction(ws281xp);
