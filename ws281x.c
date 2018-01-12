@@ -53,8 +53,6 @@ static void ws281xStartTransaction(ws281xDriver *ws281xp)
     ws281xp->config->pwmd->tim->EGR |= STM32_TIM_EGR_UG;
     /* Wait until RESET of UG bit */
     while ((ws281xp->config->pwmd->tim->EGR & STM32_TIM_EGR_UG) > 0) {}
-    /* Load data from preload to active register */
-    ws281xp->config->pwmd->tim->EGR |= STM32_TIM_EGR_UG;
 
     // enable counting
     ws281xp->config->pwmd->tim->CR1 |= STM32_TIM_CR1_CEN;
