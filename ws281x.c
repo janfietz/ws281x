@@ -45,7 +45,6 @@ static void ws281xStartTransaction(ws281xDriver *ws281xp)
 {
     ws281xp->transactionActive = true;
     ws281xSetupDMA(ws281xp);
-    dmaStreamEnable(ws281xp->config->dmastp);
 
     /*
     * Load buffer into preload register
@@ -54,6 +53,7 @@ static void ws281xStartTransaction(ws281xDriver *ws281xp)
     /* Wait until RESET of UG bit */
     while ((ws281xp->config->pwmd->tim->EGR & STM32_TIM_EGR_UG) > 0) {}
 
+    dmaStreamEnable(ws281xp->config->dmastp);
     // enable counting
     ws281xp->config->pwmd->tim->CR1 |= STM32_TIM_CR1_CEN;
 }
